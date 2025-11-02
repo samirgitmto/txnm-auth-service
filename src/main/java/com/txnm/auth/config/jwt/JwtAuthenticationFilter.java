@@ -41,10 +41,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		// 5. Set SecurityContext with Authentication
 		
 		String token = extractJwtFromRequest(request);
-		if (token == null) return;
 		
 		try {
-			if (jwtUtil.validateToken(token)) {
+			if (token!=null && jwtUtil.validateToken(token)) {
 				
 				String emailFromToken = jwtUtil.getEmailFromToken(token);
 				TxnmUser txnmUser = txnmUserRepository.findByEmailWithRoles(emailFromToken)

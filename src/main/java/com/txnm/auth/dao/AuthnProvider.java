@@ -3,7 +3,10 @@ package com.txnm.auth.dao;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.Type;
 import org.springframework.lang.Nullable;
+
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,6 +45,7 @@ public class AuthnProvider {
     @Column(name = "password_hash")
     private String passwordHash; // Only for local provider
 
+    @Type(JsonBinaryType.class)
     @Column(name = "provider_metadata", columnDefinition = "jsonb")
     private String providerMetadata; // Store additional provider data as JSON
 

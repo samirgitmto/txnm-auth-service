@@ -24,7 +24,7 @@ public class Config {
 		.csrf(c -> c.disable())
 		.authorizeHttpRequests(
 				auth -> auth
-						.requestMatchers("user/*").permitAll()
+						.requestMatchers("/user/**").permitAll()
 						.anyRequest().authenticated()
 				)
 		.sessionManagement(ssn -> ssn

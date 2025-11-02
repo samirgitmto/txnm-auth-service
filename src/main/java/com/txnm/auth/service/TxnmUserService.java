@@ -2,6 +2,7 @@ package com.txnm.auth.service;
 
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,5 +29,16 @@ public class TxnmUserService {
         
         TxnmUser savedUser = userRepository.save(user);
         return savedUser;
+	}
+	
+	public TxnmUser findByEmail(String email) {
+		return userRepository.findByEmail(email).get();
+	}
+	
+	public UUID verifyEmail(String email) {
+		TxnmUser savedUser = findByEmail(email);
+		savedUser.setEmailVerified(true);
+		userRepository.save(savedUser);
+		return savedUser.getId();
 	}
 }
