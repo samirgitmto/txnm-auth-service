@@ -2,6 +2,8 @@ package com.txnm.auth.repo;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +20,7 @@ public interface TxnmUserRepository extends JpaRepository<TxnmUser, UUID> {
     // Simple query - since roles are eagerly fetched, this might be sufficient
     Optional<TxnmUser> findByEmail(String email);
 	
+    @EntityGraph(attributePaths = {"roles", "authnProviders"})
+    @Query("SELECT u FROM TxnmUser u WHERE u.email = :email")
+    Optional<TxnmUser> findByEmailWithRelations(@Param("email") String email);
 }

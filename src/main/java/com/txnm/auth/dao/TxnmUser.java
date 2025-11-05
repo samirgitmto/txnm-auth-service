@@ -62,7 +62,7 @@ public class TxnmUser {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
     
-    // One User can have multiple AuthProviders (local, google, etc.)
+    // One User can have multiple AuthProviders (local, google, etc.) // OneToMany by default lazy loaded
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AuthnProvider> authnProviders = new ArrayList<>();
     

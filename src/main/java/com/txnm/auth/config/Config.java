@@ -29,6 +29,7 @@ public class Config {
 				)
 		.sessionManagement(ssn -> ssn
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .logout(logout -> logout.disable())   // Disable Spring Security's default logout
 		.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		
 		return httpSecurity.build();

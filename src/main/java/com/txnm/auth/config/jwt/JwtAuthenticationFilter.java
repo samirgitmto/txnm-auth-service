@@ -15,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.txnm.auth.dao.TxnmUser;
 import com.txnm.auth.repo.TxnmUserRepository;
+import com.txnm.auth.service.TxnmUserDetailsService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,9 +27,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	
 	@Autowired
 	private JwtUtil jwtUtil;
-	
 	@Autowired
 	private TxnmUserRepository txnmUserRepository;
+	@Autowired
+	private TxnmUserDetailsService userDetailsService;
 	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -46,12 +48,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			if (token!=null && jwtUtil.validateToken(token)) {
 				
 				String emailFromToken = jwtUtil.getEmailFromToken(token);
-				TxnmUser txnmUser = txnmUserRepository.findByEmailWithRoles(emailFromToken)
-												.orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + emailFromToken));
 				
+				// to be removed later
+//				TxnmUser txnmUser = txnmUserRepository.findByEmailWithRoles(emailFromToken)
+//												.orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + emailFromToken));
+//				UserDetails userDetails = jwtUtil.createUserDetailsFromTxnmUser(txnmUser);
+//				Collection<? extends GrantedAuthority> authorities = jwtUtil.getAuthorities(txnmUser);
 				
-				UserDetails userDetails = jwtUtil.createUserDetailsFromTxnmUser(txnmUser);
-				Collection<? extends GrantedAuthority> authorities = jwtUtil.getAuthorities(txnmUser);
+				UserDetails userDetails = userDetailsService.loadUserByUsername(emailFromToken);
+				Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
 				UsernamePasswordAuthenticationToken uPAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 				
 				SecurityContextHolder.getContext()

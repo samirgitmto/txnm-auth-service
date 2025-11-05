@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,8 +16,11 @@ import org.springframework.stereotype.Component;
 
 import com.txnm.auth.dao.AuthnProvider;
 import com.txnm.auth.dao.TxnmUser;
+import com.txnm.auth.service.TokenBlacklist;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -32,6 +37,10 @@ public class JwtUtil {
     
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
+    
+    @Autowired
+    @Qualifier("TokenBlacklistImplConcurrentSet")
+    private TokenBlacklist tokenBlacklist;
     
     private Key getSigningKey() {
         byte[] decodedKeyBytes = Decoders.BASE64.decode(jwtSecret);
@@ -69,11 +78,18 @@ public class JwtUtil {
             return false;
         }
         
+        if (tokenBlacklist.isBlacklisted(token)) {
+        	return false;
+        }
+        
         try {
             JwtParser jwtParser = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build();
-            jwtParser.parseClaimsJws(token);
+            Jws<Claims> claimsJws = jwtParser.parseClaimsJws(token);
+            System.out.println("Header: " + claimsJws.getHeader());
+            System.out.println("Body: " + claimsJws.getBody());
+            System.err.println(claimsJws.getSignature());
             return true;
         }
         catch (ExpiredJwtException e) {
@@ -103,31 +119,8 @@ public class JwtUtil {
         return jwtParser.parseClaimsJws(token).getBody().getExpiration();
     }
 
-	public UserDetails createUserDetailsFromTxnmUser(TxnmUser txnmUser) {
-		UserDetails userDetails = User.builder()
-			.username(txnmUser.getEmail())
-			.password(getPasswordFromTxnmUser(txnmUser))     // Handle both local and OAuth2 users
-			.authorities(getAuthorities(txnmUser))
-			.accountExpired(false)
-			.accountLocked(false)
-			.credentialsExpired(false)
-			.disabled(!txnmUser.isEmailVerified())
-			.build();
-		
-		return userDetails;
-	}
+    public void blacklistToken(String token) {
+        tokenBlacklist.addToBlacklist(token);
+    }
 
-	public Collection<? extends GrantedAuthority> getAuthorities(TxnmUser txnmUser) {
-	    return txnmUser.getRoles().stream()
-	            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
-	            .collect(Collectors.toList());
-	}
-
-	private String getPasswordFromTxnmUser(TxnmUser txnmUser) {
-	    return txnmUser.getAuthnProviders().stream()
-	            .filter(auth -> "local".equals(auth.getProvider()))
-	            .findFirst()
-	            .map(AuthnProvider::getPasswordHash)
-	            .orElse("");
-	}
 }

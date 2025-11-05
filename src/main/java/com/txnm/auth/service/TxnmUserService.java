@@ -35,6 +35,10 @@ public class TxnmUserService {
 		return userRepository.findByEmail(email).get();
 	}
 	
+	public void save(TxnmUser txnmUser) {
+		userRepository.save(txnmUser);
+	}
+	
 	public UUID verifyEmail(String email) {
 		TxnmUser savedUser = findByEmail(email);
 		savedUser.setEmailVerified(true);
